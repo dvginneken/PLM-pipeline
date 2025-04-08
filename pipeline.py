@@ -42,7 +42,7 @@ parser.add_argument(
 args = parser.parse_args()
 
 sequences_column = args.sequences_column
-model_name = args.model_name
+model_name = args.model_name.lower()
 file_path = args.file_path
 save_path = args.output_folder
 seq_id_column = args.sequence_id_column
@@ -69,22 +69,22 @@ if not os.path.exists(save_path):
     os.mkdir(save_path)
 
 # Initialize the model
-if model_name == "Ablang":
+if model_name == "ablang":
     model_hc = Ablang(chain="heavy")
     model_lc = Ablang(chain="light")
-elif model_name == "Sapiens":
+elif model_name == "sapiens":
     model_hc = Sapiens(chain_type="H")
     model_lc = Sapiens(chain_type="L")
-elif model_name == "ESM1b":
+elif model_name == "esm1b":
     model = ESM1b(cache_dir=cache_dir)
-elif model_name == "ProtBert":
+elif model_name == "protbert":
     model = ProtBert()
 else:
     print("model_name is unknown.")
     sys.exit()
 
 # Ablang and Sapiens have different models for heavy and light chains
-if model_name in ["Ablang", "Sapiens"]:
+if model_name in ["ablang", "sapiens"]:
     if "chain" not in sequence_file.columns:
         print(
             "Column 'chain' not found in input CSV. When running Ablang or Sapiens, "
@@ -156,7 +156,7 @@ if model_name in ["Ablang", "Sapiens"]:
         embeds = pd.concat([embeds_hc, embeds_lc], ignore_index=True)
         embeds.to_csv(os.path.join(save_path, f"embeddings_{model_name}.csv"), index=False)
 
-elif model_name not in ["Ablang", "Sapiens"]:
+elif model_name not in ["ablang", "sapiens"]:
     # Perform calculations
     # Calculate pseudolikelihood, add to sequence_file, and save as CSV
     if "pseudolikelihood" in calc_list:

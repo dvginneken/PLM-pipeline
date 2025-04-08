@@ -1,9 +1,7 @@
 import sapiens
-import sys
 import pandas as pd
 import numpy as np
 import pickle as pkl
-import os
 from tqdm import tqdm
 
 from .utils import get_pseudo_likelihood

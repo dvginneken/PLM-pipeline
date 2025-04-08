@@ -1,9 +1,5 @@
-import os 
 import pandas as pd
 import numpy as np
-from Bio.Align import PairwiseAligner
-import re 
-import warnings
 import logging
 from transformers import logging as transformers_logging
 

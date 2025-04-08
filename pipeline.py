@@ -1,6 +1,5 @@
 # Import packages
 import pandas as pd
-import numpy as np
 import os
 import sys
 import argparse
@@ -85,7 +84,7 @@ if model_name in ["Ablang","Sapiens"]:
     #Calculate probability matrices and potentially suggested mutations
     if "probability_matrix" in calc_list:   
         # If "suggest_mutations" is in the calc_list, create a dataframe to store all the mutations of all sequences
-        if("suggest_mutations" in calc_list):
+        if "suggest_mutations" in calc_list:
             all_mutations_df = pd.DataFrame()
 
         # Calculate probability matrix (and mutations) for each sequence
@@ -102,7 +101,7 @@ if model_name in ["Ablang","Sapiens"]:
             prob_matrix.to_csv(os.path.join(save_path,f"prob_matrix_seq_{seq_id}_{model_name}.csv"), index = False)
 
             # Calculate the suggested mutations for this sequence
-            if("suggest_mutations" in calc_list):
+            if "suggest_mutations" in calc_list:
                 mutations_df = calculate_mutations(
                     sequences_file=sequence_file.loc[[index]],
                     prob_matrix=prob_matrix,
@@ -114,7 +113,7 @@ if model_name in ["Ablang","Sapiens"]:
                 all_mutations_df = pd.concat([all_mutations_df, mutations_df], ignore_index=True)
             
         # Saves all the mutations for all sequences
-        if("suggest_mutations" in calc_list):
+        if "suggest_mutations" in calc_list:
             output_file = os.path.join(save_path, f"{model_name}_{number_mutations}_mutations.csv")
             all_mutations_df.to_csv(output_file, index=False)
             print(f"All mutations saved to: {output_file}")
@@ -142,7 +141,7 @@ else: #If model is not Ablang or Sapiens:
     #Calculate probability matrices and potentially suggested mutations
     if "probability_matrix" in calc_list:   
         # If "suggest_mutations" is in the calc_list, create a dataframe to store all the mutations of all sequences
-        if("suggest_mutations" in calc_list):
+        if "suggest_mutations" in calc_list:
             all_mutations_df = pd.DataFrame()
         
         # Calculate probability matrix (and mutations) for each sequence
@@ -154,7 +153,7 @@ else: #If model is not Ablang or Sapiens:
             prob_matrix.to_csv(os.path.join(save_path,f"prob_matrix_seq_{seq_id}_{model_name}.csv"), index = False)
             
             # Calculate the suggested mutations for this sequence
-            if("suggest_mutations" in calc_list):
+            if "suggest_mutations" in calc_list:
                 mutations_df = calculate_mutations(
                     sequences_file=sequence_file.loc[[index]],
                     prob_matrix=prob_matrix,
@@ -166,13 +165,13 @@ else: #If model is not Ablang or Sapiens:
                 all_mutations_df = pd.concat([all_mutations_df, mutations_df], ignore_index=True)
             
         # Saves all the mutations for all sequences
-        if("suggest_mutations" in calc_list):
+        if "suggest_mutations" in calc_list:
             output_file = os.path.join(save_path, f"{model_name}_{number_mutations}_mutations.csv")
             all_mutations_df.to_csv(output_file, index=False)
             print(f"All mutations saved to: {output_file}")
 
     if "embeddings" in calc_list:
-        #Calculate embeddings, add to sequence_file, and save as CSV
+        # Calculate embeddings, add to sequence_file, and save as CSV
         embeds = model.fit_transform(sequences=list(sequence_file[sequences_column]))
         embeds = pd.concat([sequence_file,embeds],axis=1)  
         embeds.to_csv(os.path.join(save_path,f"embeddings_{model_name}.csv"), index=False)

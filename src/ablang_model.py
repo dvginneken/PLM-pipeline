@@ -4,8 +4,6 @@ import pandas as pd
 import pickle as pkl
 import scipy
 from tqdm import tqdm
-import os
-import sys
 import torch
 
 from .utils import get_pseudo_likelihood

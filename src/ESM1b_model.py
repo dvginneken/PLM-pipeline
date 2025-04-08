@@ -3,10 +3,7 @@ import torch
 import pandas as pd
 import numpy as np
 from tqdm import tqdm
-from esm import pretrained
 import pickle as pkl
-import os
-import sys
 import scipy
 
 from .utils import get_pseudo_likelihood

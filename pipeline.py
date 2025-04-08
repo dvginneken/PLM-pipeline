@@ -10,18 +10,20 @@ from src.ESM1b_model import ESM1b
 from src.sapiens_model import Sapiens
 from src.protbert import ProtBert
 
-#### Handle command-line arguments
+# Handle command-line arguments
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--model_name", help="Choose from: Ablang, ProtBert, Sapiens, ESM1b")
 parser.add_argument("--file_path")
-parser.add_argument("--sequences_column")
+parser.add_argument(
+    "--sequences_column", default="sequence", help="Column name in the input file where sequences are stored."
+)
 parser.add_argument(
     "--sequence_id_column",
     default="sequence_id",
     help="Column name in the input file where sequence ID's are stored.",
 )
-parser.add_argument("--output_folder")
+parser.add_argument("--output_folder", default="output", help="Output folder to save results.")
 parser.add_argument(
     "--calc_list",
     nargs="*",

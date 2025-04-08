@@ -13,3 +13,4 @@ scipy
 skorch
 scikit-learn
 keras
+biopython

@@ -9,8 +9,7 @@ import os
 import sys
 import scipy
 
-sys.path.append("../scripts")
-from utils import get_pseudo_likelihood
+from .utils import get_pseudo_likelihood
 
 
 class ESM1b():

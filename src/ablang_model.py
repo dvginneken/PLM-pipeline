@@ -8,9 +8,7 @@ import os
 import sys
 import torch
 
-sys.path.append("../scripts")
-
-from utils import get_pseudo_likelihood
+from .utils import get_pseudo_likelihood
 class Ablang():
 
     """

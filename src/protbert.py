@@ -6,10 +6,9 @@ import torch
 import scipy
 import os
 import sys
-from utils import get_pseudo_likelihood
+from .utils import get_pseudo_likelihood
 import pickle as pkl
 
-sys.path.append("../scripts")
 class ProtBert():
 
     """

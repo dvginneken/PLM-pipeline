@@ -1,21 +1,18 @@
-#Import packages
+# Import packages
 import pandas as pd
 import numpy as np
 import os
 import sys
 import argparse
 
-#Set path to src
-sys.path.append("../src")
-
 #Import extra functions
-from utils import calculate_mutations
+from src.utils import calculate_mutations
 
 #Import PLMs
-from ablang_model import Ablang
-from ESM1b_model import ESM1b
-from sapiens_model import Sapiens
-from protbert import ProtBert
+from src.ablang_model import Ablang
+from src.ESM1b_model import ESM1b
+from src.sapiens_model import Sapiens
+from src.protbert import ProtBert
 
 #### Handle command-line arguments
 parser = argparse.ArgumentParser()
@@ -39,7 +36,7 @@ seq_id_column = args.sequence_id_column
 cache_dir = args.cache_dir
 number_mutations = int(args.number_mutations) if args.number_mutations else 1 #If number_mutations is not supplied, set to 1
 calc_list = args.calc_list
-if("suggest_mutations" in calc_list):
+if "suggest_mutations" in calc_list:
     calc_list.append("probability_matrix") #If "suggest_mutations" is in calc_list, also calculate probability matrices"
 ####
 

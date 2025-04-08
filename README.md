@@ -14,7 +14,7 @@ The pipeline takes as input a list of sequences in a CSV, which are passed into 
 `pip install -r requirements.txt`
 
 ## Run the pipeline
-Run the script `scripts/pipeline.py ` with the following arguments:
+Run the script `pipeline.py ` with the following arguments:
 - `model_name` class name of the model to use. Currently available: Ablang, ProtBert, Sapiens, ESM1b
 - `file_path` path with the location of the input CSV file.
     - This CSV file should contain:
@@ -45,5 +45,5 @@ Run the script `scripts/pipeline.py ` with the following arguments:
 ## Adding new functions
 - Add the function to each model class file in the folder `src/`
 - General functions can be written in `src/utils.py`
-- Call the new function in the `scripts/pipeline.py` script seperately for Ablang/Sapiens and other models
+- Call the new function in the `pipeline.py` script seperately for Ablang/Sapiens and other models
 - Add the new function plus a description in this README

@@ -137,26 +137,29 @@ class ESM1b():
         pll_all_sequences = []
         self.mask_model = self.mask_model.to(self.device)
 
-        for j,sequence in enumerate(tqdm(sequences)):
-            try: 
-                amino_acids = list(sequence)
-                seq_tokens = ' '.join(amino_acids)
-                seq_tokens = self.tokenizer(seq_tokens, return_tensors='pt')
-                seq_tokens = seq_tokens.to(self.device)
-                logits = self.mask_model(**seq_tokens).logits[0].cpu().detach().numpy()
-                prob = scipy.special.softmax(logits,axis = 1)
-                df = pd.DataFrame(prob, columns = self.tokenizer.convert_ids_to_tokens(range(0,33)))
-                df = df.iloc[1:-1,:]
+        for sequence in tqdm(sequences):
+            if len(sequence) < 1023: #ESM1b max sequence length is 1023
+                try: 
+                    amino_acids = list(sequence)
+                    seq_tokens = ' '.join(amino_acids)
+                    seq_tokens = self.tokenizer(seq_tokens, return_tensors='pt')
+                    seq_tokens = seq_tokens.to(self.device)
+                    logits = self.mask_model(**seq_tokens).logits[0].cpu().detach().numpy()
+                    prob = scipy.special.softmax(logits,axis = 1)
+                    df = pd.DataFrame(prob, columns = self.tokenizer.convert_ids_to_tokens(range(0,33)))
+                    df = df.iloc[1:-1,:]
 
-                per_position_ll = []
-                for i in range(len(amino_acids)):
-                    aa_i = amino_acids[i]
-                    ll_i = np.log(df.iloc[i,:][aa_i])
-                    per_position_ll.append(ll_i)
-                
-                pll_seq = np.average(per_position_ll)
-                pll_all_sequences.append(pll_seq)
-            except:
+                    per_position_ll = []
+                    for i in range(len(amino_acids)):
+                        aa_i = amino_acids[i]
+                        ll_i = np.log(df.iloc[i,:][aa_i])
+                        per_position_ll.append(ll_i)
+                    
+                    pll_seq = np.average(per_position_ll)
+                    pll_all_sequences.append(pll_seq)
+                except:
+                    pll_all_sequences.append(None)
+            else:
                 pll_all_sequences.append(None)
 
         return pll_all_sequences

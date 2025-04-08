@@ -3,7 +3,7 @@ snakemake
 transformers
 pandas
 tqdm
-torch
+torch==2.5.1
 tensorboardX
 ablang
 sapiens
@@ -14,4 +14,4 @@ skorch
 scikit-learn
 keras
 biopython
-accelerate
+accelerate==1.6.0

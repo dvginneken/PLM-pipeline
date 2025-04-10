@@ -147,10 +147,10 @@ if model_name in ["ablang", "sapiens"]:
 
     if "embeddings" in calc_list:
         # Calculate embeddings, add to sequence_file, and save as CSV
-        sequence_file_hc = sequence_file[sequence_file["chain"] == "IGH"]
-        sequence_file_lc = sequence_file[sequence_file["chain"] != "IGH"]
-        embeds_hc = model_hc.fit_transform(sequences=list(sequence_file_hc[sequences_column]))
-        embeds_lc = model_lc.fit_transform(sequences=list(sequence_file_lc[sequences_column]))
+        sequence_file_hc = sequence_file[sequence_file["chain"] == "IGH"].reset_index(drop=True)
+        sequence_file_lc = sequence_file[sequence_file["chain"] != "IGH"].reset_index(drop=True)
+        embeds_hc = model_hc.fit_transform(sequences=list(sequence_file_hc[sequences_column])).reset_index(drop=True)
+        embeds_lc = model_lc.fit_transform(sequences=list(sequence_file_lc[sequences_column])).reset_index(drop=True)
         embeds_hc = pd.concat([sequence_file_hc, embeds_hc], axis=1)
         embeds_lc = pd.concat([sequence_file_lc, embeds_lc], axis=1)
         embeds = pd.concat([embeds_hc, embeds_lc], ignore_index=True)

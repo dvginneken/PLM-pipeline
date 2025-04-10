@@ -1,10 +1,9 @@
+from typing import Union
+
 import sapiens
 import pandas as pd
 import numpy as np
-import pickle as pkl
 from tqdm import tqdm
-
-from .utils import get_pseudo_likelihood
 
 
 class Sapiens:
@@ -13,7 +12,7 @@ class Sapiens:
     Author: Aurora
     """
 
-    def __init__(self, chain_type="H", method="average", file_name="."):
+    def __init__(self, chain_type: str = "H", method: str = "average", file_name: str = "."):
         """
         Creates the instance of the language model instance
 
@@ -21,25 +20,19 @@ class Sapiens:
         ----------
 
         chain_type: `str`
-        `L` or `H` whether the input is from light or heavy chains resprectively
+        `L` or `H` whether the input is from light or heavy chains respectively
 
         method: `str`
-        Layer that we want the embedings from
+        Layer that we want the embeddings from
 
         file_name: `str`
         The name of the folder to store the embeddings
         """
 
         self.chain = chain_type
-        if isinstance(method, int):
-            self.layer = method
-        elif method == "average":
-            self.layer = None
-        else:
-            self.layer = "prob"
         self.file = file_name
 
-    def fit_transform(self, sequences):
+    def fit_transform(self, sequences: list) -> Union[pd.DataFrame, None]:
         """
         Fits the model and outputs the embeddings.
 
@@ -52,70 +45,39 @@ class Sapiens:
 
         None, saved the embeddings in the embeddings.csv
         """
+        print("Using the average layer")
+        output = []
+        for sequence in sequences:
+            try:
+                result = np.mean(
+                    np.mean(sapiens.predict_residue_embedding(sequence, chain_type=self.chain), axis=1),
+                    axis=0,
+                )
+                output.append(dict(enumerate(result)))
+            except Exception as e:
+                print(e)
+                continue
+        output = pd.DataFrame(output).add_prefix("dim_")
+        return output.reset_index(drop=True)
 
-        if self.layer == None:
-            print("Using the average layer")
-            output = []
-            for j, sequence in enumerate(sequences):
-                try:
-                    output.append(
-                        list(
-                            np.mean(
-                                np.mean(sapiens.predict_residue_embedding(sequence, chain_type=self.chain), axis=1),
-                                axis=0,
-                            )
-                        )
-                    )
-                except Exception as e:
-                    print(e)
-                    continue
-            output = pd.DataFrame(output, columns=[f"dim_{i}" for i in range(len(output[0]))])
-            return output.reset_index(drop=True)
-        elif self.layer == "prob":
-            print("\n Making probabilities")
-            output = sequences.apply(lambda seq: pd.DataFrame(sapiens.predict_scores(seq, chain_type=self.chain)))
-            embedings = get_pseudo_likelihood(output, sequences)
-            pkl.dump([output, embedings], open("outfiles/" + self.file + "/probabilities_pseudo.pkl", "wb"))
-        else:
-            print("\nUsing the {} layer".format(self.layer))
-            output = []
-            for j, sequence in enumerate(sequences):
-                try:
-                    output.append(
-                        list(
-                            np.mean(sapiens.predict_residue_embedding(sequence, chain_type=self.chain), axis=1)[
-                                self.layer - 1, :
-                            ]
-                        )
-                    )
-                except:
-                    continue
-            output.columns = [f"dim_{i}" for i in range(output.shape[1])]
-            return output.reset_index(drop=True)
-
-    def calc_pseudo_likelihood_sequence(self, sequences: list):
+    def calc_pseudo_likelihood_sequence(self, sequences: list) -> list:
         pll_all_sequences = []
-        for j, sequence in enumerate(tqdm(sequences)):
+        for sequence in tqdm(sequences):
             try:
                 amino_acids = list(sequence)
                 df = pd.DataFrame(sapiens.predict_scores(sequence, chain_type=self.chain))
-
                 per_position_ll = []
-                for i in range(len(amino_acids)):
-                    aa_i = amino_acids[i]
-                    if aa_i == "-" or aa_i == "*":
-                        continue
-                    ll_i = np.log(df.iloc[i, :][aa_i])
+                for i, amino_acid in enumerate(amino_acids):
+                    ll_i = np.log(df.iloc[i, :][amino_acid])
                     per_position_ll.append(ll_i)
 
                 pll_seq = np.average(per_position_ll)
                 pll_all_sequences.append(pll_seq)
-            except:
+            except Exception as e:
+                print(e)
                 pll_all_sequences.append(None)
-
         return pll_all_sequences
 
-    def calc_probability_matrix(self, sequence: str):
+    def calc_probability_matrix(self, sequence: str) -> pd.DataFrame:
         df = pd.DataFrame(sapiens.predict_scores(sequence, chain_type=self.chain))
-
         return df

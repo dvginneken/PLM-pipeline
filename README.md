@@ -40,10 +40,10 @@ Run the script `pipeline.py ` with the following arguments:
     - `fit_transform` which will transform the sequences using the model and create embeddings.
     - `calc_pseudo_likelihood_sequence` calculates the pseudolikelihood of whole sequence (sum of log-scaled per-residue probablities, divided by sequence length)
     - `calc_probability_matrix` calculates the probability matrix of each amino acid per position of a sequence
-- Add the model to `scripts/pipeline.py` as import and at the initialization step.
+- Add the model to `pipeline.py` as import and at the initialization step.
 
 ## Adding new functions
 - Add the function to each model class file in the folder `src/`
 - General functions can be written in `src/utils.py`
-- Call the new function in the `pipeline.py` script seperately for Ablang/Sapiens and other models
+- Call the new function in the `pipeline.py` script separately for Ablang/Sapiens and other models
 - Add the new function plus a description in this README

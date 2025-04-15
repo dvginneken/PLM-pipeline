@@ -11,7 +11,8 @@ The pipeline takes as input a list of sequences in a CSV, which are passed into 
 `conda activate plm`
 
 - To install necessary libraries:
-`pip install -r requirements.txt`
+`pip install -r requirements.txt`  
+or `pip install -r requirements_sapiens.txt` since Sapiens is not compatible with Python version 3.9 and above.
 
 ## Run the pipeline
 Run the script `scripts/pipeline.py ` with the following arguments:

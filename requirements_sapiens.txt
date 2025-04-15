@@ -1,4 +1,4 @@
-numpy
+numpy==1.23.5
 snakemake
 transformers
 pandas
@@ -7,8 +7,9 @@ torch
 tensorboardX
 ablang
 ablang2
+sapiens
+antiberty
 fair-esm 
-esm
 scipy
 skorch
 scikit-learn

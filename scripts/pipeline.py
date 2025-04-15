@@ -13,6 +13,7 @@ from utils import calculate_mutations
 
 #Import PLMs
 from ablang_model import Ablang
+from ablang2_model import Ablang2
 from ESM1b_model import ESM1b
 from sapiens_model import Sapiens
 from protbert import ProtBert
@@ -20,7 +21,7 @@ from protbert import ProtBert
 #### Handle command-line arguments
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--model_name', help="Choose from: Ablang,ProtBert,Sapiens,ESM1b") 
+parser.add_argument('--model_name', help="Choose from: Ablang,Ablang2,ProtBert,Sapiens,ESM1b") 
 parser.add_argument('--file_path')
 parser.add_argument('--sequences_column')
 parser.add_argument('--sequence_id_column', default="sequence_id", help="Column name in the input file where sequence ID's are stored.")
@@ -64,6 +65,8 @@ elif model_name == "ESM1b":
     model = ESM1b(cache_dir=cache_dir)
 elif model_name == "ProtBert":
     model = ProtBert()
+elif model_name == "Ablang2":
+    model = Ablang2()
 else:
     print("model_name is unknown.")
     sys.exit()

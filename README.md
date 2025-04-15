@@ -21,6 +21,7 @@ Run the script `scripts/pipeline.py ` with the following arguments:
         - a column with a unique sequence identifier named `sequence_id`
         - a column with the sequence specified in the parameter `sequence_column`
         - a column named `chain` with either IGH/IGL/IGK for Ig heavy chain or light chain sequences respectively, only necessary when using the models Ablang and Sapiens   
+    - When using Ablang2, the VH and VL sequences in the `sequence_column` should be separated with `|` where VH should be the first element and VL the second  
 - `sequence_column` column name of the sequence to use in the input CSV
 - `sequence_id_column` column name of the sequence identifier in the input CSV (default: sequence_id)
 - `output_folder` folder name to store output

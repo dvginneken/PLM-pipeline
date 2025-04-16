@@ -58,7 +58,7 @@ class Ablang2():
 
     def calc_pseudo_likelihood_sequence(self, sequences: list):
         """
-        Fits the model and outputs the embeddings.
+        Calculate the pseudolikelihood of a list of sequences.
         
         parameters
         ----------
@@ -75,19 +75,19 @@ class Ablang2():
 
     def calc_probability_matrix(self, sequence:str):
         """
-        Fits the model and outputs the embeddings.
+        Calculate the probability matrix of a sequence.
         
         parameters
         ----------
 
-        sequences: `string` 
+        sequence: `string` 
         Sequence to be transformed, VH and VL are separated with |
         ------
 
         prob_matrix: `dataframe`
         Probability matrix of each amino acid in this VH+VL sequence
         """
-        sequence = [sequence.split("|")] # Split sequences in VH an VL
+        sequence = [sequence.split("|")] # Split sequence in VH an VL
         logits = self.model(sequence, mode="likelihood")[0] # Calculate the likelihood
         prob = scipy.special.softmax(logits,axis = 1) # Softmax transformation
         prob_matrix = pd.DataFrame(prob, columns = list(self.model.tokenizer.decode(range(0,26)))).iloc[1:-4,] # Transform to dataframe and remove the start, stop and sep positions

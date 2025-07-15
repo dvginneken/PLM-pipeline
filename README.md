@@ -17,7 +17,7 @@ or `pip install -r requirements_sapiens.txt` since Sapiens is not compatible wit
 ## Run the pipeline
 (optional) Set the cache directory in the shell: `export HF_HOME="/path/to/your/cache_dir"`  
 Run the script `scripts/pipeline.py ` with the following arguments:
-- `model_name` class name of the model to use. Currently available: Ablang, ProtBert, Sapiens, ESM1b
+- `model_name` class name of the model to use. Currently available: Ablang, Ablang2, ProtBert, Sapiens, ESM1b, ESM-C
 - `file_path` path with the location of the input CSV file.
     - This CSV file should contain:
         - a column with a unique sequence identifier named `sequence_id`

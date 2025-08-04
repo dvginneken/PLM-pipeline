@@ -67,7 +67,7 @@ class ESMc():
         None, saved the embeddings in the embeddings.csv
         """
 
-        print("\nUsing the {} method".format(self.method))
+        print("\nUsing the {} method".format(method))
         
         pooler_zero = np.zeros((len(sequence_file.index),960))
         for index, row in sequence_file.iterrows():
@@ -80,18 +80,18 @@ class ESMc():
             #TO DO
             # if layer == ..
             #    
-            if self.method == "average": # Average over all residues for each head
+            if method == "average": # Average over all residues for each head
                 output = torch.mean(embeddings_output, axis = 0)
                 pooler_zero[index,:] = output.tolist()
 
-            elif self.method == "per_token": # Per token embeddings
+            elif method == "per_token": # Per token embeddings
                 output = embeddings_output
                 embeds = pd.DataFrame(output.cpu().numpy(), columns=[f"dim_{i}" for i in range(output.shape[1])])
                 embeds = embeds.iloc[1:-1,:] # Remove start and stop token
                 embeds.to_csv(os.path.join(save_path,f"embeddings_seq_{seq_id}_{model_name}.csv"), index = False)
 
         # Save the average embeddings to a CSV file
-        if self.method == "average":
+        if method == "average":
             embeds = pd.DataFrame(pooler_zero,columns=[f"dim_{i}" for i in range(pooler_zero.shape[1])])
             embeds = pd.concat([sequence_file,embeds],axis=1) # Add to the sequence file 
             embeds.to_csv(os.path.join(save_path,f"embeddings_{model_name}.csv"), index=False)

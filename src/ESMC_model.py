@@ -78,7 +78,7 @@ class ESMc():
             #TO DO
             # if layer == ..
             #    
-            if method == "average": # Average over all residues for each head
+            if method == "average_pooling": # Average over all residues for each head
                 output = torch.mean(embeddings_output, axis = 0)
                 pooler_zero[index,:] = output.tolist()
 
@@ -89,7 +89,7 @@ class ESMc():
                 embeds.to_csv(os.path.join(save_path,f"embeddings_seq_{seq_id}_{model_name}.csv"), index = False)
 
         # Save the average embeddings to a CSV file
-        if method == "average":
+        if method == "average_pooling":
             embeds = pd.DataFrame(pooler_zero,columns=[f"dim_{i}" for i in range(pooler_zero.shape[1])])
             embeds = pd.concat([sequence_file,embeds],axis=1) # Add to the sequence file 
             embeds.to_csv(os.path.join(save_path,f"embeddings_{model_name}.csv"), index=False)

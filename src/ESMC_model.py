@@ -20,10 +20,7 @@ class ESMc():
     def __init__(self, ):
         
         """
-        Creates the instance of the language model instance, loads tokenizer and model
-
-        parameters
-        ----------
+        Creates the instance of the language model and loads model
 
         """
         
@@ -31,7 +28,7 @@ class ESMc():
 
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
-        self.model = ESMC.from_pretrained("esmc_300m").to(self.device)
+        self.model = ESMC.from_pretrained("esmc_600m").to(self.device)
 
         
 
@@ -164,4 +161,4 @@ class ESMc():
         prob_matrix = df.iloc[1:-1,:] # Remove start and stop token
         prob_matrix = prob_matrix.drop(columns=['<cls>','<pad>','<eos>','<unk>','.','-','|','<mask>','X',None]) # Drop special tokens
         prob_matrix = prob_matrix.reindex(sorted(prob_matrix.columns), axis=1) # Sort columns on alphabetical order
-        return df
+        return prob_matrix

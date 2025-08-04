@@ -19,8 +19,14 @@ parser.add_argument('--sequences_column')
 parser.add_argument('--sequence_id_column', default="sequence_id", help="Column name in the input file where sequence ID's are stored.")
 parser.add_argument('--output_folder')
 parser.add_argument('--calc_list', nargs="*", help="Example: pseudolikelihood, probability_matrix, suggest_mutations, embeddings")
-parser.add_argument('--number_mutations', help="Choose the number of mutations you want the model to suggest (Default is 1)")
 parser.add_argument('--cache_dir', default = "default", help="Potential cache directory for ESM1b pretrained model.")
+
+# Arguments for suggest_mutations
+parser.add_argument('--number_mutations', help="Choose the number of mutations you want the model to suggest (Default is 1)")
+
+# Arguments for embeddings
+parser.add_argument('--layer', default="last", help="Choose the layer from which to extract the embeddings. Default is 'last'.")
+parser.add_argument('--embeddings_method', default="average_pooling", help="Choose the method to extract embeddings. Example: 'average_pooling', 'per_token'. Default is 'average_pooling'.")
 
 args = parser.parse_args()
 
@@ -34,6 +40,8 @@ number_mutations = int(args.number_mutations) if args.number_mutations else 1 #I
 calc_list = args.calc_list
 if("suggest_mutations" in calc_list):
     calc_list.append("probability_matrix") #If "suggest_mutations" is in calc_list, also calculate probability matrices"
+layer = args.layer if args.layer else "last" #If layer is not supplied, set to "last"
+method = args.embeddings_method if args.embeddings_method else "average_pooling" #If method is not supplied, set to "average_pooling"
 ####
 
 #### Read input file 
@@ -179,6 +187,11 @@ else: #If model is not Ablang or Sapiens:
 
     if "embeddings" in calc_list:
         #Calculate embeddings, add to sequence_file, and save as CSV
-        embeds = model.fit_transform(sequences=list(sequence_file[sequences_column]))
-        embeds = pd.concat([sequence_file,embeds],axis=1)  
-        embeds.to_csv(os.path.join(save_path,f"embeddings_{model_name}.csv"), index=False)
+        embeds = model.fit_transform(sequence_file, 
+                                     layer=layer, 
+                                     method=method, 
+                                     save_path=save_path, 
+                                     model_name=model_name,
+                                     seq_id_column=seq_id_column,
+                                     sequences_column=sequences_column)
+

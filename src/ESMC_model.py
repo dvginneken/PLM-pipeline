@@ -16,7 +16,7 @@ class ESMc():
     Class for the protein Language Model ESMC
     """
 
-    def __init__(self, method = "average", cache_dir = "default"):
+    def __init__(self, ):
         
         """
         Creates the instance of the language model instance, loads tokenizer and model
@@ -24,15 +24,9 @@ class ESMc():
         parameters
         ----------
 
-        method: `str`
-        Which token to use to extract embeddings of the last layer
-        
-        file_name: `str`
-        The name of the folder to store the embeddings
         """
         
 
-        self.method = method
 
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
@@ -40,18 +34,34 @@ class ESMc():
 
         
 
-    def fit_transform(self, sequences:list):
+    def fit_transform(self, sequence_file, layer:str = "last", method:str = "average_pooling", save_path:str = ".", model_name:str = "ESMc", 
+                      seq_id_column:str = "sequence_id", sequences_column:str = "sequence"):
         """
         Fits the model and outputs the embeddings.
         
         parameters
         ----------
 
-        sequences: `list` 
-        List with sequences to be transformed
+        sequence_file: `dataframe` 
+        DataFrame with sequences to be transformed
         
-        batches: `int`
-        Number of batches. Per batch a checkpoint file will be saved
+        layer: `str`
+        Layer from which to extract the embeddings. Default is "last".
+
+        method: `str`
+        Method to extract the embeddings. Default is "average_pooling". Options: "average_pooling", "per_token".
+
+        save_path: `str`
+        Path to save the embeddings CSV file. Default is current directory.
+
+        model_name: `str`
+        Name of the model, used for saving the embeddings file. Default is "ESMc".
+
+        seq_id_column: `str`
+        Column name in the sequence_file DataFrame that contains unique sequence identifiers. Default is "sequence_id".
+
+        sequences_column: `str`
+        Column name in the sequence_file DataFrame that contains sequences. Default is "sequence".
         ------
 
         None, saved the embeddings in the embeddings.csv
@@ -59,16 +69,33 @@ class ESMc():
 
         print("\nUsing the {} method".format(self.method))
         
-        pooler_zero = np.zeros((len(sequences),960))
-        for sequence,_ in zip(enumerate(sequences), range(len(sequences))):
-            protein = ESMProtein(sequence=sequence[1])
+        pooler_zero = np.zeros((len(sequence_file.index),960))
+        for index, row in sequence_file.iterrows():
+            sequence = row[sequences_column]
+            seq_id = row[seq_id_column]
+            protein = ESMProtein(sequence=sequence)
             protein_tensor = self.model.encode(protein) # Tokenize the sequence
-            embeddings_output = self.model.logits(protein_tensor, LogitsConfig(sequence=True, return_embeddings=True)).embeddings[0] # Get the embeddings of the last hidden layer   
+            if layer == "last":
+                embeddings_output = self.model.logits(protein_tensor, LogitsConfig(sequence=True, return_embeddings=True)).embeddings[0] # Get the embeddings of the last hidden layer
+            #TO DO
+            # if layer == ..
+            #    
             if self.method == "average": # Average over all residues for each head
                 output = torch.mean(embeddings_output, axis = 0)
-            pooler_zero[sequence[0],:] = output.tolist()
+                pooler_zero[index,:] = output.tolist()
 
-        return pd.DataFrame(pooler_zero,columns=[f"dim_{i}" for i in range(pooler_zero.shape[1])])
+            elif self.method == "per_token": # Per token embeddings
+                output = embeddings_output
+                embeds = pd.DataFrame(output.cpu().numpy(), columns=[f"dim_{i}" for i in range(output.shape[1])])
+                embeds = embeds.iloc[1:-1,:] # Remove start and stop token
+                embeds.to_csv(os.path.join(save_path,f"embeddings_seq_{seq_id}_{model_name}.csv"), index = False)
+
+        # Save the average embeddings to a CSV file
+        if self.method == "average":
+            embeds = pd.DataFrame(pooler_zero,columns=[f"dim_{i}" for i in range(pooler_zero.shape[1])])
+            embeds = pd.concat([sequence_file,embeds],axis=1) # Add to the sequence file 
+            embeds.to_csv(os.path.join(save_path,f"embeddings_{model_name}.csv"), index=False)
+
 
 
     def calc_pseudo_likelihood_sequence(self, sequences:list):

@@ -79,7 +79,7 @@ class ESMc():
             # if layer == ..
             #    
             if method == "average_pooling": # Average over all residues for each head
-                output = torch.mean(embeddings_output, axis = 0)
+                output = torch.mean(embeddings_output, axis = 1)
                 pooler_zero[index,:] = output.tolist()
 
             elif method == "per_token": # Per token embeddings

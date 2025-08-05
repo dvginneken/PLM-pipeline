@@ -67,7 +67,7 @@ class ESMc():
 
         print("\nUsing the {} method".format(method))
         
-        pooler_zero = np.zeros((len(sequence_file.index),960))
+        pooler_zero = np.zeros((len(sequence_file.index),1152))
         for index, row in sequence_file.iterrows():
             sequence = row[sequences_column]
             seq_id = row[seq_id_column]
@@ -79,7 +79,7 @@ class ESMc():
             # if layer == ..
             #    
             if method == "average_pooling": # Average over all residues for each head
-                output = torch.mean(embeddings_output, axis = 1)
+                output = torch.mean(embeddings_output, axis = 0)
                 pooler_zero[index,:] = output.tolist()
 
             elif method == "per_token": # Per token embeddings

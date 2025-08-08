@@ -93,7 +93,7 @@ class ProtBert():
 
             elif method == "per_token": # Per token embeddings
                 output = embeddings_output
-                embeds = pd.DataFrame(output.detach().numpy(), columns=[f"dim_{i}" for i in range(output.shape[1])])
+                embeds = pd.DataFrame(output.cpu().numpy(), columns=[f"dim_{i}" for i in range(output.shape[1])])
                 embeds.to_csv(os.path.join(save_path,f"embeddings_seq_{seq_id}_{model_name}.csv"), index = False)
 
         # Save the average embeddings to a CSV file

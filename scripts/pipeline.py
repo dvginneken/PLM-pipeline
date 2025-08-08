@@ -71,7 +71,7 @@ elif model_name == "ESMC":
     model = ESMc()
 elif model_name == "ProtBert":
     from protbert import ProtBert
-    model = ProtBert()
+    model = ProtBert(cache_dir=cache_dir)
 elif model_name == "Ablang2":
     from ablang2_model import Ablang2
     model = Ablang2()
@@ -187,7 +187,7 @@ else: #If model is not Ablang or Sapiens:
 
     if "embeddings" in calc_list:
         #Calculate embeddings, add to sequence_file, and save as CSV
-        embeds = model.fit_transform(sequence_file, 
+        model.fit_transform(sequence_file, 
                                      layer=layer, 
                                      method=method, 
                                      save_path=save_path, 

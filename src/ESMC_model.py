@@ -24,10 +24,7 @@ class ESMc():
 
         """
         
-
-
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-
         self.model = ESMC.from_pretrained("esmc_600m").to(self.device)
 
         
@@ -102,12 +99,13 @@ class ESMc():
         
         parameters
         ----------
-
         sequences: `list` 
         List with sequences to be transformed
-        ------
 
-        pll_all_sequences: `array`
+        returns
+        -------
+        pll_all_sequences: `list`
+        List of pseudolikelihood values for each sequence.
         """
 
         pll_all_sequences = []
@@ -143,11 +141,11 @@ class ESMc():
         
         parameters
         ----------
-
         sequence: `string` 
         Sequence to be transformed, VH and VL are separated with |
-        ------
 
+        returns
+        -------
         prob_matrix: `dataframe`
         Probability matrix of each amino acid in this sequence
         """
@@ -162,3 +160,4 @@ class ESMc():
         prob_matrix = prob_matrix.drop(columns=['<cls>','<pad>','<eos>','<unk>','.','-','|','<mask>','X',None]) # Drop special tokens
         prob_matrix = prob_matrix.reindex(sorted(prob_matrix.columns), axis=1) # Sort columns on alphabetical order
         return prob_matrix
+    

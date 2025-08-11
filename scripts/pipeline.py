@@ -136,13 +136,22 @@ if model_name in ["Ablang","Sapiens"]:
     if "embeddings" in calc_list:
         #Calculate embeddings, add to sequence_file, and save as CSV
         sequence_file_hc = sequence_file[sequence_file["chain"] == "IGH"]
-        sequence_file_lc = sequence_file[sequence_file["chain"] != "IGH"]
-        embeds_hc = model_hc.fit_transform(sequences=list(sequence_file_hc[sequences_column]))
-        embeds_lc = model_lc.fit_transform(sequences=list(sequence_file_lc[sequences_column]))
-        embeds_hc = pd.concat([sequence_file_hc,embeds_hc],axis=1)
-        embeds_lc = pd.concat([sequence_file_lc,embeds_lc],axis=1)
-        embeds = pd.concat([embeds_hc, embeds_lc], ignore_index=True)  
-        embeds.to_csv(os.path.join(save_path,f"embeddings_{model_name}.csv"), index=False) 
+        sequence_file_lc = sequence_file[sequence_file["chain"] != "IGH"] 
+
+        if method == "per_token": # If per_token embeddings are requested, save them separately
+            model_hc.fit_transform(sequence_file_hc, layer=layer, method=method, save_path=save_path, model_name=model_name,
+                                   seq_id_column=seq_id_column, sequences_column=sequences_column)
+            model_lc.fit_transform(sequence_file_lc, layer=layer, method=method, save_path=save_path, model_name=model_name,
+                                   seq_id_column=seq_id_column, sequences_column=sequences_column)
+        elif method == "average_pooling": # If average_pooling embeddings are requested, concatenate and save as one file
+            embeds_hc = model_hc.fit_transform(sequence_file_hc, layer=layer, method=method, save_path=save_path, model_name=model_name,
+                                               seq_id_column=seq_id_column, sequences_column=sequences_column)
+            embeds_lc = model_lc.fit_transform(sequence_file_lc, layer=layer, method=method, save_path=save_path, model_name=model_name,
+                                               seq_id_column=seq_id_column, sequences_column=sequences_column)
+            embeds_hc = pd.concat([sequence_file_hc,embeds_hc],axis=1)
+            embeds_lc = pd.concat([sequence_file_lc,embeds_lc],axis=1)
+            embeds = pd.concat([embeds_hc, embeds_lc], ignore_index=True)  
+            embeds.to_csv(os.path.join(save_path,f"embeddings_{model_name}.csv"), index=False)
 
 else: #If model is not Ablang or Sapiens:
 
@@ -187,11 +196,6 @@ else: #If model is not Ablang or Sapiens:
 
     if "embeddings" in calc_list:
         #Calculate embeddings, add to sequence_file, and save as CSV
-        model.fit_transform(sequence_file, 
-                                     layer=layer, 
-                                     method=method, 
-                                     save_path=save_path, 
-                                     model_name=model_name,
-                                     seq_id_column=seq_id_column,
-                                     sequences_column=sequences_column)
+        model.fit_transform(sequence_file, layer=layer, method=method, save_path=save_path, model_name=model_name, 
+                            seq_id_column=seq_id_column, sequences_column=sequences_column)
 

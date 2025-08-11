@@ -135,8 +135,8 @@ if model_name in ["Ablang","Sapiens"]:
 
     if "embeddings" in calc_list:
         #Calculate embeddings, add to sequence_file, and save as CSV
-        sequence_file_hc = sequence_file[sequence_file["chain"] == "IGH"]
-        sequence_file_lc = sequence_file[sequence_file["chain"] != "IGH"] 
+        sequence_file_hc = sequence_file[sequence_file["chain"] == "IGH"].reset_index(drop=True)
+        sequence_file_lc = sequence_file[sequence_file["chain"] != "IGH"].reset_index(drop=True)
 
         if method == "per_token": # If per_token embeddings are requested, save them separately
             model_hc.fit_transform(sequence_file_hc, layer=layer, method=method, save_path=save_path, model_name=model_name,

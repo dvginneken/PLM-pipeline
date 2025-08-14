@@ -22,7 +22,7 @@ parser.add_argument('--calc_list', nargs="*", help="Example: pseudolikelihood, p
 parser.add_argument('--cache_dir', default = "default", help="Potential cache directory for ESM1b pretrained model.")
 
 # Arguments for suggest_mutations
-parser.add_argument('--number_mutations', help="Choose the number of mutations you want the model to suggest (Default is 1)")
+parser.add_argument('--number_mutations', default=1, help="Choose the number of mutations you want the model to suggest (Default is 1)")
 
 # Arguments for embeddings
 parser.add_argument('--layer', default="last", help="Choose the layer from which to extract the embeddings. Default is 'last'.")
@@ -123,7 +123,7 @@ if model_name == "Ablang2": # Ablang2 can pair the heavy and light chains for th
         
     if "embeddings" in calc_list:
         #Calculate embeddings, add to sequence_file, and save as CSV
-        model.fit_transform(paired_sequences, layer=layer, method=method, save_path=save_path, model_name=model_name, 
+        model.fit_transform(sequences_file=paired_sequences, layer=layer, method=method, save_path=save_path, model_name=model_name, 
                             seq_id_column=seq_id_column, sequences_column="sequences")
 
 elif model_name in ["Ablang","Sapiens"]:  # Ablang and Sapiens have different models for heavy and light chains

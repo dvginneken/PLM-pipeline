@@ -6,105 +6,117 @@ import torch
 import scipy
 import os
 import sys
-from utils import get_pseudo_likelihood
 import pickle as pkl
 
 sys.path.append("../scripts")
 class ProtBert():
 
     """
-    Class for the protein Language Model
+    Class for the Protein Language Model ProtBERT
     """
 
-    def __init__(self, method = "average", file_name = "."):
+    def __init__(self, cache_dir = "default"):
         """
         Creates the instance of the language model instance, loads tokenizer and model
 
         parameters
         ----------
 
-        method: `str`
-        Which token to use to extract embeddings of the last layer
-        
-        file_name: `str`
-        The name of the folder to store the embeddings
+        cache_dir: `str`
+        Directory to cache the model and tokenizer
         """
         
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
-        self.tokenizer = BertTokenizer.from_pretrained("Rostlab/prot_bert", do_lower_case=False)
 
-        self.model = BertModel.from_pretrained("Rostlab/prot_bert").to(self.device)
-    
-        self.mask_model = BertForMaskedLM.from_pretrained("Rostlab/prot_bert").to(self.device)
+        if cache_dir != "default":
+            CACHE_DIR = cache_dir
+            self.tokenizer = BertTokenizer.from_pretrained("Rostlab/prot_bert", do_lower_case=False, cache_dir=CACHE_DIR)
+            self.model = BertModel.from_pretrained("Rostlab/prot_bert", cache_dir=CACHE_DIR).to(self.device)
+            self.mask_model = BertForMaskedLM.from_pretrained("Rostlab/prot_bert", cache_dir=CACHE_DIR).to(self.device)
+        else:
+            self.tokenizer = BertTokenizer.from_pretrained("Rostlab/prot_bert", do_lower_case=False)
+            self.model = BertModel.from_pretrained("Rostlab/prot_bert").to(self.device)
+            self.mask_model = BertForMaskedLM.from_pretrained("Rostlab/prot_bert").to(self.device)
 
-        self.method = method
-        self.file = file_name
 
-
-    def fit_transform(self, sequences:list, batches = 10):
+    def fit_transform(self, sequence_file, layer:str = "last", method:str = "average_pooling", save_path:str = ".", model_name:str = "ESMc", 
+                      seq_id_column:str = "sequence_id", sequences_column:str = "sequence"):
         """
         Fits the model and outputs the embeddings.
         
         parameters
         ----------
 
-        sequences: `list` 
-        List with sequences to be transformed
+        sequence_file: `dataframe` 
+        DataFrame with sequences to be transformed
         
-        batches: `int`
-        Number of batches. Per batch a checkpoint file will be saved
+        layer: `str`
+        Layer from which to extract the embeddings. Default is "last".
 
-        return
-        ------
+        method: `str`
+        Method to extract the embeddings. Default is "average_pooling". Options: "average_pooling", "per_token".
 
+        save_path: `str`
+        Path to save the embeddings CSV file. Default is current directory.
+
+        model_name: `str`
+        Name of the model, used for saving the embeddings file. Default is "ESMc".
+
+        seq_id_column: `str`
+        Column name in the sequence_file DataFrame that contains unique sequence identifiers. Default is "sequence_id".
+
+        sequences_column: `str`
+        Column name in the sequence_file DataFrame that contains sequences. Default is "sequence".
+
+        returns
+        -------
         None, saved the embeddings in the embeddings.csv
         """
-        batch_size = round(len(sequences)/batches)
         
-        pooler_zero = np.zeros((len(sequences), 1024))
-        print("\nUsing the {} method".format(self.method))
-        for sequence,_ in zip(enumerate(sequences), tqdm(range(len(sequences)))):
-            if not isinstance(sequence[1], float):
-                #seq_tokens = ' '.join(list(sequence[1]))
-                tokenized_sequences = self.tokenizer(sequence[1], return_tensors= 'pt').to(self.device) #return tensors using pytorch
-                output = self.model(**tokenized_sequences)
-                if self.method == "average":
-                    output = torch.mean(output.last_hidden_state, axis = 1)[0]
-                
-                elif self.method == "pooler":
-                    output = output.pooler_output[0]
-                elif self.method == "first":
-                    output = output.last_hidden_state[:,0][0]
-                elif self.method == "last":
-                    output = output.last_hidden_state[:,-1][0]
-                    
-                pooler_zero[sequence[0],:] = output.tolist()
-
-        return pd.DataFrame(pooler_zero,columns=[f"dim_{i}" for i in range(pooler_zero.shape[1])])
-
-
-    def calc_evo_likelihood_matrix_per_position(self, sequences: list):
-        probs = []
-        self.mask_model = self.mask_model.to(self.device)
-
-        for sequence in tqdm(sequences):
+        pooler_zero = np.zeros((len(sequence_file.index), 1024))
+        for index, row in sequence_file.iterrows():
+            sequence = row[sequences_column]
+            seq_id = row[seq_id_column]
             seq_tokens = ' '.join(list(sequence))
-            seq_tokens = self.tokenizer(seq_tokens, return_tensors='pt')
-            seq_tokens = seq_tokens.to(self.device)
-            logits = self.mask_model(**seq_tokens).logits[0].cpu().detach().numpy()
-            prob = scipy.special.softmax(logits,axis = 1)
-            df = pd.DataFrame(prob, columns = self.tokenizer.vocab)
-            df = df.iloc[:,5:-5]
-            df = df.loc[:, df.columns.isin(["U","Z","O","B","X"]) == False]
-            #removing CLS and SEP
-            df = df.iloc[1:-1,:]
-            df = df.reindex(sorted(df.columns), axis=1)
-            probs.append(df)
+            protein_tensor = self.tokenizer(seq_tokens, return_tensors= 'pt') #return tensors using pytorch
+            protein_tensor = protein_tensor.to(self.device)
+            output = self.model(**protein_tensor)
 
-        likelihoods = get_pseudo_likelihood(probs, sequences) 
-        pkl.dump([probs,likelihoods],open("outfiles/"+self.file+"/probabilities_pseudo.pkl","wb"))
+            if layer == "last":
+                embeddings_output = output.last_hidden_state[0] # Get the embeddings of the last hidden layer
+            #TO DO
+            # if layer == ..
+            #    
+            if method == "average_pooling": # Average over all residues for each head
+                output = torch.mean(embeddings_output, axis = 0)
+                pooler_zero[index,:] = output.tolist()
+
+            elif method == "per_token": # Per token embeddings
+                output = embeddings_output
+                embeds = pd.DataFrame(output.cpu().detach().numpy(), columns=[f"dim_{i}" for i in range(output.shape[1])])
+                embeds.to_csv(os.path.join(save_path,f"embeddings_seq_{seq_id}_{model_name}.csv"), index = False)
+
+        # Save the average embeddings to a CSV file
+        if method == "average_pooling":
+            embeds = pd.DataFrame(pooler_zero,columns=[f"dim_{i}" for i in range(pooler_zero.shape[1])])
+            embeds = pd.concat([sequence_file,embeds],axis=1) # Add to the sequence file 
+            embeds.to_csv(os.path.join(save_path,f"embeddings_{model_name}.csv"), index=False)
+
 
     def calc_pseudo_likelihood_sequence(self, sequences: list):
+        """
+        Calculates the pseudolikelihood of a list of sequences.
+
+        parameters
+        ----------
+        sequences: `list`
+        List with sequences to be transformed
+
+        returns
+        -------
+        pll_all_sequences: `list`
+        List of pseudolikelihood values for each sequence.
+        """
         pll_all_sequences = []
         self.mask_model = self.mask_model.to(self.device)
 
@@ -133,6 +145,19 @@ class ProtBert():
         return pll_all_sequences
 
     def calc_probability_matrix(self, sequence:str):
+        """
+        Calculates the probability matrix for a given sequence.
+
+        parameters
+        ----------
+        sequence: `str`
+        The input sequence for which to calculate the probability matrix.
+
+        returns
+        -------
+        prob_matrix: `dataframe`
+        The probability matrix for the input sequence.
+        """
         amino_acids = list(sequence)
         seq_tokens = ' '.join(amino_acids)
         seq_tokens = self.tokenizer(seq_tokens, return_tensors='pt')
@@ -140,6 +165,6 @@ class ProtBert():
         logits = self.mask_model(**seq_tokens).logits[0].cpu().detach().numpy()
         prob = scipy.special.softmax(logits,axis = 1)
         df = pd.DataFrame(prob, columns = self.tokenizer.vocab)
-        df = df.iloc[1:-1, 5:-5] # Newly added
+        df = df.iloc[1:-1, 5:-5]
         
         return df

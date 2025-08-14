@@ -3,6 +3,7 @@ import pandas as pd
 import scipy
 import sys
 import torch
+import os
 
 sys.path.append("../scripts")
 
@@ -12,15 +13,9 @@ class Ablang2():
     Class for the protein Model Ablang2
     """
 
-    def __init__(self, file_name = ".", method = "seqcoding"):
+    def __init__(self):
         """
-        Creates the instance of the language model instance; either light or heavy
-        
-        method: `str`
-        Which token to use to extract embeddings of the last layer
-        
-        file_name: `str`
-        The name of the folder to store the embeddings
+        Initializes the Ablang2 model.
         """
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
@@ -30,30 +25,53 @@ class Ablang2():
         #dont update the weights
         self.model.freeze()
 
-        self.file = file_name
-        self.mode = method
     
 
 
-    def fit_transform(self, sequences):
+    def fit_transform(self, sequence_file, layer:str = "last", method:str = "average_pooling", save_path:str = ".", model_name:str = "ESMc", 
+                      seq_id_column:str = "sequence_id", sequences_column:str = "sequence"):
         """
         Fits the model and outputs the embeddings.
         
         parameters
         ----------
 
-        sequences: `list` 
-        List with sequences to be transformed VH and VL are separated with |
-        ------
-
-        None, saved the embeddings in the embeddings.csv
-        """
-        all_seqs = [sequence.split("|") for sequence in sequences]  # Split sequences in VH an VL 
-        output = self.model(all_seqs, mode=self.mode)
+        sequence_file: `dataframe` 
+        DataFrame with sequences to be transformed
         
-        if self.mode == "seqcoding":
-            #The embeddings are made my averaging across all residues    
-            return pd.DataFrame(output,columns=[f"dim_{i}" for i in range(output.shape[1])])
+        layer: `str`
+        Layer from which to extract the embeddings. Default is "last".
+
+        method: `str`
+        Method to extract the embeddings. Default is "average_pooling". Options: "average_pooling", "per_token".
+
+        save_path: `str`
+        Path to save the embeddings CSV file. Default is current directory.
+
+        model_name: `str`
+        Name of the model, used for saving the embeddings file. Default is "ESMc".
+
+        seq_id_column: `str`
+        Column name in the sequence_file DataFrame that contains unique sequence identifiers. Default is "sequence_id".
+
+        sequences_column: `str`
+        Column name in the sequence_file DataFrame that contains sequences. Default is "sequence".
+
+
+        """
+        all_seqs = [sequence.split("|") for sequence in sequence_file[sequences_column]]
+        if method == "average_pooling": #The embeddings are made my averaging across all residues
+            output = self.model(all_seqs, mode="seqcoding")
+            embeds = pd.DataFrame(output,columns=[f"dim_{i}" for i in range(output.shape[1])])
+            embeds.to_csv(os.path.join(save_path,f"embeddings_{model_name}.csv"), index=False)
+        elif method == "per_token": #The embeddings are made by extracting the last layer of the model
+            for index, row in sequence_file.iterrows():
+                sequence = row[sequences_column].split("|")
+                seq_id = row[seq_id_column]
+                output = self.model(sequence, mode="rescoding")[0]
+                embeds = pd.DataFrame(output, columns=[f"dim_{i}" for i in range(output.shape[1])])
+                embeds.to_csv(os.path.join(save_path,f"embeddings_seq_{seq_id}_{model_name}.csv"), index = False)
+        
         
 
     def calc_pseudo_likelihood_sequence(self, sequences: list):
@@ -75,13 +93,13 @@ class Ablang2():
 
     def calc_probability_matrix(self, sequence:str):
         """
-        Calculate the probability matrix of a sequence.
+        Calculate the probability matrix of the heavy and light chain sequences.
         
         parameters
         ----------
 
         sequence: `string` 
-        Sequence to be transformed, VH and VL are separated with |
+        Sequences to be transformed, VH and VL are separated with |
         ------
 
         prob_matrix: `dataframe`

@@ -60,7 +60,6 @@ class Ablang2():
 
         """
         all_seqs = [sequence.split("|") for sequence in sequence_file[sequences_column]]
-        print(all_seqs)
         if method == "average_pooling": #The embeddings are made my averaging across all residues
             output = self.model(all_seqs, mode="seqcoding")
             embeds = pd.DataFrame(output,columns=[f"dim_{i}" for i in range(output.shape[1])])

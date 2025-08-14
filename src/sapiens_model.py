@@ -7,7 +7,6 @@ import os
 from tqdm import tqdm
 
 sys.path.append(os.getcwd()+"/src")
-from utils import get_pseudo_likelihood
 class Sapiens():
 
     """
@@ -15,7 +14,7 @@ class Sapiens():
     Author: Aurora
     """
 
-    def __init__(self, chain_type="H", method="average", file_name = "."):
+    def __init__(self, chain_type="H"):
         """
         Creates the instance of the language model instance
 
@@ -33,53 +32,62 @@ class Sapiens():
         """
 
         self.chain = chain_type
-        if isinstance (method,int):
-            self.layer = method
-        elif method == "average":
-            self.layer = None
-        else:
-            self.layer = "prob"
-        self.file = file_name
 
-    def fit_transform(self, sequences):
+    def fit_transform(self, sequence_file, layer:str = "last", method:str = "average_pooling", save_path:str = ".", model_name:str = "ESMc", 
+                      seq_id_column:str = "sequence_id", sequences_column:str = "sequence"):
         """
         Fits the model and outputs the embeddings.
         
         parameters
         ----------
 
-        sequences: `list` 
-        Column with sequences to be transformed
-        ------
+        sequence_file: `dataframe` 
+        DataFrame with sequences to be transformed
+        
+        layer: `str`
+        Layer from which to extract the embeddings. Default is "last".
 
-        None, saved the embeddings in the embeddings.csv
+        method: `str`
+        Method to extract the embeddings. Default is "average_pooling". Options: "average_pooling", "per_token".
+
+        save_path: `str`
+        Path to save the embeddings CSV file. Default is current directory.
+
+        model_name: `str`
+        Name of the model, used for saving the embeddings file. Default is "ESMc".
+
+        seq_id_column: `str`
+        Column name in the sequence_file DataFrame that contains unique sequence identifiers. Default is "sequence_id".
+
+        sequences_column: `str`
+        Column name in the sequence_file DataFrame that contains sequences. Default is "sequence".
+
+        ----------
+        return: `dataframe`
+        DataFrame with the extracted embeddings if method is "average_pooling".
+
         """
+        pooler_zero = np.zeros((len(sequence_file.index),128))
+        for index, row in sequence_file.iterrows():
+            sequence = row[sequences_column]
+            seq_id = row[seq_id_column]
+   
+            if method == "average_pooling":
+                if layer == "last":
+                    embeddings_output = sapiens.predict_sequence_embedding(sequence, chain_type=self.chain, layer = None)[-1] # Get the embeddings of the last hidden layer
+                #TO DO
+                # if layer == ..
+                # 
+                pooler_zero[index,:] = embeddings_output.tolist()
 
-        if self.layer == None:
-            print("Using the average layer")
-            output = []
-            for j,sequence in enumerate(sequences):
-                try:
-                    output.append(list(np.mean(np.mean(sapiens.predict_residue_embedding(sequence, chain_type=self.chain), axis = 1),axis = 0)))
-                except:
-                    continue
-            output = pd.DataFrame(output, columns=[f"dim_{i}" for i in range(len(output[0]))])
-            return output.reset_index(drop=True)
-        elif self.layer == "prob":
-            print("\n Making probabilities")
-            output = sequences.apply(lambda seq: pd.DataFrame(sapiens.predict_scores(seq, chain_type=self.chain)))
-            embedings = get_pseudo_likelihood(output, sequences)
-            pkl.dump([output,embedings],open("outfiles/"+self.file+"/probabilities_pseudo.pkl","wb"))
-        else:
-            print("\nUsing the {} layer".format(self.layer))
-            output = []
-            for j,sequence in enumerate(sequences):
-                try:
-                    output.append(list(np.mean(sapiens.predict_residue_embedding(sequence, chain_type=self.chain), axis = 1)[self.layer-1,:]))
-                except:
-                    continue
-            output.columns = [f"dim_{i}" for i in range(output.shape[1])]
-            return output.reset_index(drop=True)
+            elif method == "per_token": # Per token embeddings
+                if layer == "last":
+                    embeddings_output = sapiens.predict_residue_embedding(sequence, chain_type=self.chain, layer = None)[-1] # Get the embeddings of the last hidden layer
+                #TO DO
+                # if layer == ..
+                # 
+                embeds = pd.DataFrame(embeddings_output, columns=[f"dim_{i}" for i in range(embeddings_output.shape[1])])
+                embeds.to_csv(os.path.join(save_path,f"embeddings_seq_{seq_id}_{model_name}.csv"), index = False)
 
     def calc_pseudo_likelihood_sequence(self, sequences:list):
         pll_all_sequences = []

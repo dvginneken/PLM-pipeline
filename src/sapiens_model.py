@@ -89,6 +89,12 @@ class Sapiens():
                 embeds = pd.DataFrame(embeddings_output, columns=[f"dim_{i}" for i in range(embeddings_output.shape[1])])
                 embeds.to_csv(os.path.join(save_path,f"embeddings_seq_{seq_id}_{model_name}.csv"), index = False)
 
+                # Save the average embeddings to a CSV file
+        if method == "average_pooling":
+            embeds = pd.DataFrame(pooler_zero,columns=[f"dim_{i}" for i in range(pooler_zero.shape[1])])
+            embeds = pd.concat([sequence_file,embeds],axis=1) # Add to the sequence file 
+            return embeds
+
     def calc_pseudo_likelihood_sequence(self, sequences:list):
         pll_all_sequences = []
         for j,sequence in enumerate(tqdm(sequences)):

@@ -123,7 +123,7 @@ if model_name == "Ablang2": # Ablang2 can pair the heavy and light chains for th
         
     if "embeddings" in calc_list:
         #Calculate embeddings, add to sequence_file, and save as CSV
-        model.fit_transform(sequences_file=paired_sequences, layer=layer, method=method, save_path=save_path, model_name=model_name, 
+        model.fit_transform(sequence_file=paired_sequences, layer=layer, method=method, save_path=save_path, model_name=model_name, 
                             seq_id_column=seq_id_column, sequences_column="sequences")
 
 elif model_name in ["Ablang","Sapiens"]:  # Ablang and Sapiens have different models for heavy and light chains

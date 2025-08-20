@@ -32,11 +32,15 @@ Run the script `scripts/pipeline.py ` with the following arguments:
     - `probability_matrix` calculates the probability matrix of each amino acid per position of each sequence and save this matrix as CSV
     - `embeddings` calculate the embeddings per sequence or per residue based on the parameter `embeddings_method`
     - `suggest_mutations`: based on the previously calculated probability matrix values it suggests a desired number of mutations
+    - `attention_matrix` calculates the attention matrix between residues in a sequence
 - `number_mutations` number of mutations you want the model to suggest (default is 1)
 - `cache_dir` path to a cache directory to download the pretrained ESM models if the standard cache should not be used.
 - `embeddings_method` method to output the embeddings, one of:
     - `average_pooling` takes the average output embeddings for each sequence, adds it to the input CSV, and saves this as output CSV (default)
     - `per_token` takes the embedding per residue, outputs a CSV per sequence
+- `layer` for which layer(s) to get the embedding or attention (default is last)
+    - `last`
+    - work in progress...
 
 ## Adding new models
 - Create a .py file which will contain the model class in the folder `src/`. Be careful that the name of the file is not the same as any of the packages that we are using
@@ -46,6 +50,7 @@ Run the script `scripts/pipeline.py ` with the following arguments:
     - `fit_transform` which will transform the sequences using the model and create embeddings.
     - `calc_pseudo_likelihood_sequence` calculates the pseudolikelihood of whole sequence (sum of log-scaled per-residue probablities, divided by sequence length)
     - `calc_probability_matrix` calculates the probability matrix of each amino acid per position of a sequence
+    - `calc_attention_matrix` calculates the attention matrix between residues in a sequence
 - Add the model to `scripts/pipeline.py` as import and at the initialization step.
 
 ## Adding new functions

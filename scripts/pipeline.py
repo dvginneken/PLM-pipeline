@@ -13,7 +13,7 @@ from utils import calculate_mutations
 #### Handle command-line arguments
 parser = argparse.ArgumentParser()
 
-parser.add_argument('--model_name', help="Choose from: Ablang,Ablang2,ProtBert,Sapiens,ESM1b,ESMC") 
+parser.add_argument('--model_name', help="Choose from: Ablang,Ablang2,ProtBert,Sapiens,ESM1b,ESMC,ESM2") 
 parser.add_argument('--file_path')
 parser.add_argument('--sequences_column')
 parser.add_argument('--sequence_id_column', default="sequence_id", help="Column name in the input file where sequence ID's are stored.")
@@ -75,6 +75,9 @@ elif model_name == "ProtBert":
 elif model_name == "Ablang2":
     from ablang2_model import Ablang2
     model = Ablang2()
+elif model_name == "ESM2":
+    from ESM2_model import ESM2
+    model = ESM2(cache_dir=cache_dir)
 else:
     print("model_name is unknown.")
     sys.exit()

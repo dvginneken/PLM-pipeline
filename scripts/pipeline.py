@@ -118,7 +118,7 @@ if model_name == "Ablang2": # Ablang2 can pair the heavy and light chains for th
             # Calculate the attention matrix for this sequence
             if "attention_matrix" in calc_list:
                 attn_matrix = model.calc_attention_matrix(paired_sequences["sequence"][index])
-                attn_matrix.to_csv(os.path.join(save_path,f"attention_matrix_seq_{seq_id}_{model_name}_Layer{layer}_Head{head}.csv")), index = False)
+                attn_matrix.to_csv(os.path.join(save_path,f"attention_matrix_seq_{seq_id}_{model_name}_Layer{layer}_Head{head}.csv"), index = False)
 
             # Calculate the suggested mutations for this sequence
             if("suggest_mutations" in calc_list):

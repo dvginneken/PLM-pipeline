@@ -212,7 +212,7 @@ class ESM1b():
             layer_int = -1
         attn_scores = outputs.attentions[1][layer_int] #batch 1 and selected layer
         if head == "average":
-            attn_matrix = attn_scores.mean(dim=0).iloc[1:-1, 1:-1]
+            attn_matrix = attn_scores.mean(dim=0)
         #TO DO
         #if head == 
         #

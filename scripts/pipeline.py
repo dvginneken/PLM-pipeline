@@ -59,8 +59,8 @@ if not os.path.exists(save_path):
 #### Initialize the model
 if model_name == "Ablang":
     from ablang_model import Ablang   
-    model_hc = Ablang(chain="heavy", calc_list)
-    model_lc = Ablang(chain="light", calc_list)
+    model_hc = Ablang(chain="heavy", calc_list=calc_list)
+    model_lc = Ablang(chain="light", calc_list=calc_list)
 elif model_name == "Sapiens":
     from sapiens_model import Sapiens
     model_hc = Sapiens(chain_type="H")

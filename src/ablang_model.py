@@ -44,10 +44,10 @@ class Ablang():
             if cache_dir != "default":
                 CACHE_DIR = cache_dir
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=CACHE_DIR)
-                self.attention_model = AutoModel.from_pretrained(model_name, output_attentions=True, cache_dir=CACHE_DIR).to(self.device)
+                self.attention_model = AutoModel.from_pretrained(model_name, trust_remote_code=True, output_attentions=True, attn_implementation="eager", cache_dir=CACHE_DIR).to(self.device)
             else:
                 self.tokenizer = AutoTokenizer.from_pretrained(model_name)
-                self.attention_model = AutoModel.from_pretrained(model_name, output_attentions=True).to(self.device)
+                self.attention_model = AutoModel.from_pretrained(model_name, trust_remote_code=True, output_attentions=True, attn_implementation="eager").to(self.device)
 
     
 

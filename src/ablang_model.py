@@ -16,7 +16,7 @@ class Ablang():
     Class for the protein Model Ablang
     """
 
-    def __init__(self, chain = "heavy", calc_list = None):
+    def __init__(self, chain = "heavy", calc_list = None, cache_dir = "default"):
         """
         Creates the instance of the language model instance; either light or heavy
 
@@ -27,6 +27,9 @@ class Ablang():
 
         calc_list: `list`
         List of calculations to perform with the model.
+
+        cache_dir: `str`
+        The directory to use for caching model files. Default is "default".
         """
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.model = ablang.pretrained(chain,device=self.device)

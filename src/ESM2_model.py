@@ -38,11 +38,11 @@ class ESM2():
         if cache_dir != "default":
             CACHE_DIR = cache_dir
             self.tokenizer = AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir=CACHE_DIR)
-            self.model = EsmModel.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir=CACHE_DIR).to(self.device)
+            self.model = EsmModel.from_pretrained("facebook/esm2_t33_650M_UR50D", output_attentions=True, cache_dir=CACHE_DIR).to(self.device)
             self.mask_model = EsmForMaskedLM.from_pretrained("facebook/esm2_t33_650M_UR50D", cache_dir=CACHE_DIR).to(self.device)
         else:
             self.tokenizer = AutoTokenizer.from_pretrained("facebook/esm2_t33_650M_UR50D")
-            self.model = EsmModel.from_pretrained("facebook/esm2_t33_650M_UR50D").to(self.device)
+            self.model = EsmModel.from_pretrained("facebook/esm2_t33_650M_UR50D", output_attentions=True).to(self.device)
             self.mask_model = EsmForMaskedLM.from_pretrained("facebook/esm2_t33_650M_UR50D").to(self.device)
 
         
@@ -183,3 +183,39 @@ class ESM2():
         
         return df
 
+    def calc_attention_matrix(self, sequence:str, layer:str = "last", head:str = "average"):
+        """
+        Calculates the attention matrix for a given sequence and layer.
+
+        parameters
+        ----------
+        sequence: `str`
+        The input protein sequence.
+
+        layer: `int`
+        The layer from which to extract the attention scores. Default is -1 (last layer).
+
+        head: `str`
+        The attention head to extract scores from. Default is "average".
+
+        returns
+        -------
+        attn_matrix: `DataFrame`
+        A DataFrame containing the attention matrix for the sequence.s
+        """
+        amino_acids = list(sequence)
+        seq_tokens = ' '.join(amino_acids)
+        seq_tokens = self.tokenizer(seq_tokens, return_tensors='pt')
+        seq_tokens = seq_tokens.to(self.device)
+        outputs = self.mask_model(**seq_tokens, output_attentions=True)
+        if layer == "last":
+            layer_int = -1
+        attn_scores = outputs.attentions[1][layer_int] #batch 1 and selected layer
+        if head == "average":
+            attn_matrix = attn_scores.mean(dim=0)
+        #TO DO
+        #if head == 
+        #
+        df = pd.DataFrame(attn_matrix.cpu().detach().numpy()).iloc[1:-1, 1:-1]
+
+        return df

@@ -18,15 +18,16 @@ parser.add_argument('--file_path')
 parser.add_argument('--sequences_column')
 parser.add_argument('--sequence_id_column', default="sequence_id", help="Column name in the input file where sequence ID's are stored.")
 parser.add_argument('--output_folder')
-parser.add_argument('--calc_list', nargs="*", help="Example: pseudolikelihood, probability_matrix, suggest_mutations, embeddings")
+parser.add_argument('--calc_list', nargs="*", help="Example: pseudolikelihood, probability_matrix, suggest_mutations, embeddings, attention_matrix")
 parser.add_argument('--cache_dir', default = "default", help="Potential cache directory for ESM1b pretrained model.")
 
 # Arguments for suggest_mutations
 parser.add_argument('--number_mutations', default=1, help="Choose the number of mutations you want the model to suggest (Default is 1)")
 
-# Arguments for embeddings
-parser.add_argument('--layer', default="last", help="Choose the layer from which to extract the embeddings. Default is 'last'.")
+# Arguments for embeddings and attention
+parser.add_argument('--layer', default="last", help="Choose the layer from which to extract the embeddings or attention. Default is 'last'.")
 parser.add_argument('--embeddings_method', default="average_pooling", help="Choose the method to extract embeddings. Example: 'average_pooling', 'per_token'. Default is 'average_pooling'.")
+parser.add_argument('--attention_head', default="average", help="From which head to take the attention matrix. Default is average across all heads.")
 
 args = parser.parse_args()
 
@@ -42,6 +43,7 @@ if("suggest_mutations" in calc_list):
     calc_list.append("probability_matrix") #If "suggest_mutations" is in calc_list, also calculate probability matrices"
 layer = args.layer if args.layer else "last" #If layer is not supplied, set to "last"
 method = args.embeddings_method if args.embeddings_method else "average_pooling" #If method is not supplied, set to "average_pooling"
+head = attention_head = args.attention_head if args.attention_head else "average" #If attention_head is not supplied, set to "average"
 ####
 
 #### Read input file 
@@ -57,8 +59,8 @@ if not os.path.exists(save_path):
 #### Initialize the model
 if model_name == "Ablang":
     from ablang_model import Ablang   
-    model_hc = Ablang(chain="heavy")
-    model_lc = Ablang(chain="light")
+    model_hc = Ablang(chain="heavy", calc_list=calc_list, cache_dir=cache_dir)
+    model_lc = Ablang(chain="light", calc_list=calc_list, cache_dir=cache_dir)
 elif model_name == "Sapiens":
     from sapiens_model import Sapiens
     model_hc = Sapiens(chain_type="H")
@@ -99,17 +101,24 @@ if model_name == "Ablang2": # Ablang2 can pair the heavy and light chains for th
         paired_sequences.to_csv(os.path.join(save_path,f"evo_likelihood_{model_name}.csv"), index=False)
 
     #Calculate probability matrices and potentially suggested mutations
-    if "probability_matrix" in calc_list:   
+    if "probability_matrix" in calc_list or "suggest_mutations" in calc_list or "attention_matrix" in calc_list:   
         # If "suggest_mutations" is in the calc_list, create a dataframe to store all the mutations of all sequences
         if("suggest_mutations" in calc_list):
             all_mutations_df = pd.DataFrame()
 
         # Calculate probability matrix (and mutations) for each sequence
-        for index in paired_sequences.index:  
+        for index in paired_sequences.index: 
+            seq_id = paired_sequences[seq_id_column][index] 
+
             # Calculates and saves the probability matrix for each sequence
-            prob_matrix = model.calc_probability_matrix(paired_sequences["sequence"][index])
-            seq_id = paired_sequences[seq_id_column][index]
-            prob_matrix.to_csv(os.path.join(save_path,f"prob_matrix_seq_{seq_id}_{model_name}.csv"), index = False)
+            if "probability_matrix" in calc_list:
+                prob_matrix = model.calc_probability_matrix(paired_sequences["sequence"][index])
+                prob_matrix.to_csv(os.path.join(save_path,f"prob_matrix_seq_{seq_id}_{model_name}.csv"), index = False)
+
+            # Calculate the attention matrix for this sequence
+            if "attention_matrix" in calc_list:
+                attn_matrix = model.calc_attention_matrix(paired_sequences["sequence"][index])
+                attn_matrix.to_csv(os.path.join(save_path,f"attention_matrix_seq_{seq_id}_{model_name}_Layer{layer}_Head{head}.csv"), index = False)
 
             # Calculate the suggested mutations for this sequence
             if("suggest_mutations" in calc_list):
@@ -146,7 +155,7 @@ elif model_name in ["Ablang","Sapiens"]:  # Ablang and Sapiens have different mo
         sequence_file.to_csv(os.path.join(save_path,f"evo_likelihood_{model_name}.csv"), index=False)
 
     #Calculate probability matrices and potentially suggested mutations
-    if "probability_matrix" in calc_list:   
+    if "probability_matrix" in calc_list or "suggest_mutations" in calc_list or "attention_matrix" in calc_list:   
         # If "suggest_mutations" is in the calc_list, create a dataframe to store all the mutations of all sequences
         if("suggest_mutations" in calc_list):
             all_mutations_df = pd.DataFrame()
@@ -159,10 +168,17 @@ elif model_name in ["Ablang","Sapiens"]:  # Ablang and Sapiens have different mo
             elif sequence_file["chain"][index] != "IGH":
                 model = model_lc
            
-            # Calculates and saves the probability matrix for each sequence
-            prob_matrix = model.calc_probability_matrix(sequence_file[sequences_column][index])
             seq_id = sequence_file[seq_id_column][index]
-            prob_matrix.to_csv(os.path.join(save_path,f"prob_matrix_seq_{seq_id}_{model_name}.csv"), index = False)
+        
+            # Calculates and saves the probability matrix for each sequence
+            if "probability_matrix" in calc_list:
+               prob_matrix = model.calc_probability_matrix(sequence_file[sequences_column][index])
+               prob_matrix.to_csv(os.path.join(save_path,f"prob_matrix_seq_{seq_id}_{model_name}.csv"), index = False)
+
+            # Calculate and save the attention matrix for each sequence
+            if "attention_matrix" in calc_list:
+                attn_matrix = model.calc_attention_matrix(sequence_file[sequences_column][index], layer=layer, head=head)
+                attn_matrix.to_csv(os.path.join(save_path,f"attention_matrix_seq_{seq_id}_{model_name}_Layer{layer}_Head{head}.csv"), index = False)
 
             # Calculate the suggested mutations for this sequence
             if("suggest_mutations" in calc_list):
@@ -207,19 +223,25 @@ else: #If model is not Ablang or Sapiens:
         sequence_file.to_csv(os.path.join(save_path,f"evo_likelihood_{model_name}.csv"), index=False)
     
     #Calculate probability matrices and potentially suggested mutations
-    if "probability_matrix" in calc_list:   
+    if "probability_matrix" in calc_list or "attention_matrix" in calc_list or "suggest_mutations" in calc_list:   
         # If "suggest_mutations" is in the calc_list, create a dataframe to store all the mutations of all sequences
         if("suggest_mutations" in calc_list):
             all_mutations_df = pd.DataFrame()
         
         # Calculate probability matrix (and mutations) for each sequence
         for index in sequence_file.index:
-            
-            # Calculates and saves the probability matrix for each sequence
             seq_id = sequence_file[seq_id_column][index]
-            prob_matrix = model.calc_probability_matrix(sequence_file[sequences_column][index])
-            prob_matrix.to_csv(os.path.join(save_path,f"prob_matrix_seq_{seq_id}_{model_name}.csv"), index = False)
-            
+
+            # Calculates and saves the probability matrix for each sequence
+            if "probability_matrix" in calc_list:
+                prob_matrix = model.calc_probability_matrix(sequence_file[sequences_column][index])
+                prob_matrix.to_csv(os.path.join(save_path,f"prob_matrix_seq_{seq_id}_{model_name}.csv"), index = False)
+
+            # Calculate and save the attention matrix for each sequence
+            if "attention_matrix" in calc_list:
+                attn_matrix = model.calc_attention_matrix(sequence_file[sequences_column][index], layer=layer, head=head)
+                attn_matrix.to_csv(os.path.join(save_path,f"attention_matrix_seq_{seq_id}_{model_name}_Layer{layer}_Head{head}.csv"), index = False)
+
             # Calculate the suggested mutations for this sequence
             if("suggest_mutations" in calc_list):
                 mutations_df = calculate_mutations(sequences_file=sequence_file.loc[[index]], prob_matrix=prob_matrix,

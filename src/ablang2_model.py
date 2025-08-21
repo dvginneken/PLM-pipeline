@@ -112,3 +112,29 @@ class Ablang2():
         prob_matrix = prob_matrix.drop(columns=['<','>','*','X','|','-']) # Drop special tokens
         prob_matrix = prob_matrix.reindex(sorted(prob_matrix.columns), axis=1) # Sort columns on alphabetical order
         return prob_matrix
+    
+    def calc_attention_matrix(self, sequence:str, layer:str = "last", head:str = "average"):
+        """
+        Calculates the attention matrix for a given sequence and layer.
+
+        parameters
+        ----------
+        sequence: `str`
+        The input protein sequence.
+
+        layer: `int`
+        The layer from which to extract the attention scores. Default is -1 (last layer).
+
+        head: `str`
+        The attention head to extract scores from. Default is "average".
+
+        returns
+        -------
+        attn_matrix: `DataFrame`
+        A DataFrame containing the attention matrix for the sequence.s
+        """
+        print("Attention matrices for Ablang2 are not implemented yet.")
+        
+        df = pd.DataFrame()
+
+        return df

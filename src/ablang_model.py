@@ -7,6 +7,7 @@ from tqdm import tqdm
 import os
 import sys
 import torch
+from transformers import AutoModel, AutoTokenizer
 
 sys.path.append("../scripts")
 
@@ -16,20 +17,37 @@ class Ablang():
     Class for the protein Model Ablang
     """
 
-    def __init__(self, chain = "heavy"):
+    def __init__(self, chain = "heavy", calc_list = None, cache_dir = "default"):
         """
         Creates the instance of the language model instance; either light or heavy
-        
-        method: `str`
-        Which token to use to extract embeddings of the last layer
-        
-        file_name: `str`
-        The name of the folder to store the embeddings
+
+        parameters
+        ----------
+        chain: `str`
+        The chain type to use for the model. Options are "heavy" or "light".
+
+        calc_list: `list`
+        List of calculations to perform with the model.
+
+        cache_dir: `str`
+        The directory to use for caching model files. Default is "default".
         """
         self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
         self.model = ablang.pretrained(chain,device=self.device)
-        #dont update the weights
-        self.model.freeze()
+
+        if "attention_matrix" in calc_list:
+            if chain == "heavy":
+                model_name = 'qilowoq/AbLang_heavy'
+            elif chain == "light":
+                model_name = 'qilowoq/AbLang_light'
+
+            if cache_dir != "default":
+                CACHE_DIR = cache_dir
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name, cache_dir=CACHE_DIR)
+                self.attention_model = AutoModel.from_pretrained(model_name, trust_remote_code=True, output_attentions=True, attn_implementation="eager", cache_dir=CACHE_DIR).to(self.device)
+            else:
+                self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+                self.attention_model = AutoModel.from_pretrained(model_name, trust_remote_code=True, output_attentions=True, attn_implementation="eager").to(self.device)
 
     
 
@@ -140,5 +158,42 @@ class Ablang():
         df = pd.DataFrame(prob, columns = list(self.model.tokenizer.vocab_to_aa.values())[4:])
         df = df.iloc[1:-1,:]
         df = df.reindex(sorted(df.columns), axis=1)
+
+        return df
+    
+    def calc_attention_matrix(self, sequence:str, layer:str = "last", head:str = "average"):
+        """
+        Calculates the attention matrix for a given sequence and layer.
+
+        parameters
+        ----------
+        sequence: `str`
+        The input protein sequence.
+
+        layer: `int`
+        The layer from which to extract the attention scores. Default is -1 (last layer).
+
+        head: `str`
+        The attention head to extract scores from. Default is "average".
+
+        returns
+        -------
+        attn_matrix: `DataFrame`
+        A DataFrame containing the attention matrix for the sequence.s
+        """
+        amino_acids = list(sequence)
+        seq_tokens = ' '.join(amino_acids)
+        seq_tokens = self.tokenizer(seq_tokens, return_tensors='pt')
+        seq_tokens = seq_tokens.to(self.device)
+        outputs = self.attention_model(**seq_tokens, output_attentions=True)
+        if layer == "last":
+            layer_int = -1
+        attn_scores = outputs.attentions[1][layer_int] #batch 1 and selected layer
+        if head == "average":
+            attn_matrix = attn_scores.mean(dim=0)
+        #TO DO
+        #if head == 
+        #
+        df = pd.DataFrame(attn_matrix.cpu().detach().numpy()).iloc[1:-1, 1:-1]
 
         return df

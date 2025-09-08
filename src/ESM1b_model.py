@@ -196,12 +196,12 @@ class ESM1b():
         The layer from which to extract the attention scores. Default is -1 (last layer).
 
         head: `str`
-        The attention head to extract scores from. Default is "average".
+        The attention head to extract scores from ("average" or "sum"). Default is "average".
 
         returns
         -------
         attn_matrix: `DataFrame`
-        A DataFrame containing the attention matrix for the sequence.s
+        A DataFrame containing the attention matrix for the sequence.
         """
         amino_acids = list(sequence)
         seq_tokens = ' '.join(amino_acids)
@@ -213,9 +213,8 @@ class ESM1b():
         attn_scores = outputs.attentions[1][layer_int] #batch 1 and selected layer
         if head == "average":
             attn_matrix = attn_scores.mean(dim=0)
-        #TO DO
-        #if head == 
-        #
+        elif head == "sum":
+            attn_matrix = attn_scores.sum(dim=0)
         df = pd.DataFrame(attn_matrix.cpu().detach().numpy()).iloc[1:-1, 1:-1]
 
         return df

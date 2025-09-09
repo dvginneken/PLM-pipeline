@@ -25,7 +25,7 @@ parser.add_argument('--cache_dir', default = "default", help="Potential cache di
 parser.add_argument('--number_mutations', default=1, help="Choose the number of mutations you want the model to suggest (Default is 1)")
 
 # Arguments for embeddings and attention
-parser.add_argument('--layer', default="last", help="Choose the layer from which to extract the embeddings or attention. Default is 'last'.")
+parser.add_argument('--layer', default="last", help="Choose the layer from which to extract the embeddings or attention. Example: 'last', 'last_five'. Default is 'last'.")
 parser.add_argument('--embeddings_method', default="average_pooling", help="Choose the method to extract embeddings. Example: 'average_pooling', 'per_token'. Default is 'average_pooling'.")
 parser.add_argument('--attention_head', default="average", help="From which head(s) to take the attention matrix. Choose from: average (default), sum.")
 

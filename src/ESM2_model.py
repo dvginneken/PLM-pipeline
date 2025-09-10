@@ -79,6 +79,9 @@ class ESM2():
 
         None, saved the embeddings in the embeddings.csv
         """
+        if layer != "last":
+            raise NotImplementedError("Only 'last' layer extraction is implemented for ESM2 model.")
+        
         print("\nUsing the {} method".format(method))
         
         pooler_zero = np.zeros((len(sequence_file.index),1280))
@@ -196,26 +199,33 @@ class ESM2():
         The layer from which to extract the attention scores. Default is -1 (last layer).
 
         head: `str`
-        The attention head to extract scores from. Default is "average".
+        The attention head to extract scores from ("average" or "sum"). Default is "average".
 
         returns
         -------
         attn_matrix: `DataFrame`
-        A DataFrame containing the attention matrix for the sequence.s
+        A DataFrame containing the attention matrix for the sequence.
         """
         amino_acids = list(sequence)
         seq_tokens = ' '.join(amino_acids)
         seq_tokens = self.tokenizer(seq_tokens, return_tensors='pt')
         seq_tokens = seq_tokens.to(self.device)
         outputs = self.mask_model(**seq_tokens, output_attentions=True)
+        attn_scores = torch.stack(outputs.attentions)
+
+        #Select the layer
         if layer == "last":
-            layer_int = -1
-        attn_scores = outputs.attentions[1][layer_int] #batch 1 and selected layer
+            attn_scores = attn_scores[-1][0] #final layer, batch 1
+        elif layer == "last_five":
+            attn_scores = attn_scores[-5:].mean(dim=0)[0] #average of last 5 layers, batch 1
+
+        #Select the head(s)
         if head == "average":
             attn_matrix = attn_scores.mean(dim=0)
-        #TO DO
-        #if head == 
-        #
+        elif head == "sum":
+            attn_matrix = attn_scores.sum(dim=0)
+
+        #Transform to dataframe and remove CLS and SEP tokens
         df = pd.DataFrame(attn_matrix.cpu().detach().numpy()).iloc[1:-1, 1:-1]
 
         return df

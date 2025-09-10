@@ -38,9 +38,12 @@ Run the script `scripts/pipeline.py ` with the following arguments:
 - `embeddings_method` method to output the embeddings, one of:
     - `average_pooling` takes the average output embeddings for each sequence, adds it to the input CSV, and saves this as output CSV (default)
     - `per_token` takes the embedding per residue, outputs a CSV per sequence
+- `attention_head` how to pool the attention heads per layer, one of:
+    - `average` (default)
+    - `sum`
 - `layer` for which layer(s) to get the embedding or attention (default is last)
-    - `last`
     - work in progress...
+
 
 ## Adding new models
 - Create a .py file which will contain the model class in the folder `src/`. Be careful that the name of the file is not the same as any of the packages that we are using

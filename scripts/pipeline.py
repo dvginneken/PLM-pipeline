@@ -25,9 +25,9 @@ parser.add_argument('--cache_dir', default = "default", help="Potential cache di
 parser.add_argument('--number_mutations', default=1, help="Choose the number of mutations you want the model to suggest (Default is 1)")
 
 # Arguments for embeddings and attention
-parser.add_argument('--layer', default="last", help="Choose the layer from which to extract the embeddings or attention. Default is 'last'.")
+parser.add_argument('--layer', default="last", help="Choose the layer from which to extract the embeddings or attention. Example: 'last', 'last_five'. Default is 'last'.")
 parser.add_argument('--embeddings_method', default="average_pooling", help="Choose the method to extract embeddings. Example: 'average_pooling', 'per_token'. Default is 'average_pooling'.")
-parser.add_argument('--attention_head', default="average", help="From which head to take the attention matrix. Default is average across all heads.")
+parser.add_argument('--attention_head', default="average", help="From which head(s) to take the attention matrix. Choose from: average (default), sum.")
 
 args = parser.parse_args()
 
@@ -117,7 +117,7 @@ if model_name == "Ablang2": # Ablang2 can pair the heavy and light chains for th
 
             # Calculate the attention matrix for this sequence
             if "attention_matrix" in calc_list:
-                attn_matrix = model.calc_attention_matrix(paired_sequences["sequence"][index])
+                attn_matrix = model.calc_attention_matrix(paired_sequences["sequence"][index], head=head, layer=layer)
                 attn_matrix.to_csv(os.path.join(save_path,f"attention_matrix_seq_{seq_id}_{model_name}_Layer{layer}_Head{head}.csv"), index = False)
 
             # Calculate the suggested mutations for this sequence
